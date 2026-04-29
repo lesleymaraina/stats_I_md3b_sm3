@@ -1,0 +1,584 @@
+---
+title: "Likelihood-Based Estimation"
+author: "<br><br><span style='font-size:25px;'><strong>Lesley Chapman Hannah, Ph.D., M.S.</strong></span><br>College of Graduate Studies<br>Northeast Ohio Medical University"
+
+format: pptx
+
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+
+```{r setup, echo=FALSE}
+library(tidyverse)
+library(broom)
+library(scales)
+
+set.seed(104)
+
+biomarker_df <- tibble(
+  id = 1:180,
+  treatment = rep(c("Placebo", "Low dose", "High dose"), each = 60),
+  ifng = c(
+    rnorm(60, mean = 11.5, sd = 4.2),
+    rnorm(60, mean = 15.3, sd = 4.8),
+    rnorm(60, mean = 19.8, sd = 5.1)
+  ),
+  response = c(
+    rbinom(60, 1, 0.28),
+    rbinom(60, 1, 0.45),
+    rbinom(60, 1, 0.62)
+  ),
+  infections = c(
+    rpois(60, lambda = 1.4),
+    rpois(60, lambda = 1.1),
+    rpois(60, lambda = 0.8)
+  ),
+  age = round(rnorm(180, mean = 61, sd = 10)),
+  bmi = round(rnorm(180, mean = 29, sd = 4.5), 1)
+)
+```
+
+### Lecture Objectives
+
+::: {style="font-size:0.6em"}
+-   define likelihood as a general estimation principle
+-   sample summaries estimate population quantities using only observed group-level data \[i.e.: sample means, proportions\]
+-   discuss how model-based estimation use statistical models to estimate relationships between variables \[i.e.: regression\]
+-   high level interpretation of linear and logistic regression output at an introductory level
+-   connect coefficients to clinically meaningful effect measures
+:::
+
+------------------------------------------------------------------------
+
+### Transition to Model-Based Estimation
+
+::: {style="font-size:0.6em"}
+Previous lectures focused on estimators that describe what is observed in the sample:
+
+-   sample means → estimate population means
+-   group differences → estimate contrasts between populations
+
+Statistical summaries are limited when addressing questions such as:
+
+-   how outcomes change across multiple predictors
+-   how to handle outcomes with different structures \[continuous, binary, counts\]
+
+Statistical models provide a framework to express how an outcome depends on predictors through unknown parameters that must be estimated
+:::
+
+------------------------------------------------------------------------
+
+### Transition to Model-Based Estimation
+
+::: {style="font-size:0.6em"}
+**Goal**: estimate unknown population quantities using observed data
+
+**Direct estimators**
+
+-   computed from observed data
+-   summarize outcomes within groups
+-   do not account for additional variables
+
+**Model-based estimators**
+
+-   specify a relationship between outcome and predictors
+-   estimate unknown parameters that define that relationship
+-   allow adjustment for multiple variables and more complex structures
+:::
+
+------------------------------------------------------------------------
+
+### Model Based Estimation
+
+::: {style="font-size:0.6em"}
+Model-based estimation:
+
+approach to estimation that uses a statistical model to describe how the outcome is generated and to estimate unknown parameters
+
+Key components:
+
+-   **outcome \[Y\]**: variable being studied
+-   **predictors \[X\]**: variables used to explain variation in the outcome
+-   **parameters \[β\]**: unknown quantities describing the relationship between X and Y
+-   **model**: mathematical expression linking Y to X through β
+
+Estimation here means: use observed data to estimate the unknown parameters that define how the outcome depends on the predictors
+:::
+
+------------------------------------------------------------------------
+
+### Likelihood
+
+::: {style="font-size:0.6em"}
+**likelihood** : function of the unknown parameters \[i.e.: probability of an event\] that describes the probability of the observed data under a specified statistical model
+
+-   function that expresses how plausible different values of the model parameters are given the observed data
+
+-   in estimation the goal is to learn about unknown population parameters using observed data
+
+    -   data Y and predictors X are fixed once observed
+    -   parameters β are unknown and must be **estimated**
+:::
+
+------------------------------------------------------------------------
+
+### Likelihood
+
+::: {style="font-size:0.6em"}
+Likelihood can be expressed as follows:
+
+$$
+L(\beta) = P(Y \mid X, \beta)
+$$
+
+formula states that the likelihood evaluates how plausible the observed outcomes are under a model with parameters $\beta$ given the observed data
+
+-   $L(\beta)$ : likelihood, viewed as a function of the unknown parameters
+-   $Y$ : set of observed outcomes
+-   $X$ : set of observed predictors or covariates
+-   $\beta$ : collection of unknown model parameters
+
+Likelihood estimate quality:
+
+-   `good estimate` : observed data likely under the assumed model
+-   `poor estimate` : parameter values under which the observed data would be unlikely
+:::
+
+------------------------------------------------------------------------
+
+### Maximum Likelihood Estimation
+
+::: {style="font-size:0.6em"}
+**maximum likelihood estimation (MLE)** : method for estimating unknown model parameters by selecting the values that maximize the likelihood function
+
+-   chooses the parameter values under which the observed data are most plausible
+
+MLE Formula:
+
+$$
+\hat{\beta}=argmax_{\beta}L(β)
+$$
+
+-   $\hat{\beta}$ : estimated parameter values\
+-   $L(\beta)$ : likelihood function\
+-   $\arg\max$ : values of $\beta$ that maximize the likelihood
+:::
+
+------------------------------------------------------------------------
+
+### Maximum Likelihood Estimation
+
+::: {style="font-size:0.6em"}
+**MLE involves**:
+
+-   evaluating many possible parameter values
+-   selecting the value that best aligns the model with the observed data
+-   resulting estimate is the one under which the observed dataset is most consistent with the model
+
+**Linking Estimation, Likelihood, and MLE**
+
+-   `estimation` : learn about unknown population parameters using observed data
+-   `likelihood` : approach for evaluating how well different parameter values explain the observed data
+-   `MLE` : method that selects the parameter values that maximize the likelihood function $\rightarrow$ yields the estimate most consistent with the observed data
+
+MLE provides a general framework for estimation across models such as:
+
+-   linear regression
+-   logistic regression
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression as Model-Based Estimation
+
+::: {style="font-size:0.6em"}
+**linear regression model**: statistical model that represents the expected value of a continuous outcome as a linear function of predictor variables with unknown parameters estimated from observed data
+
+-   linear regression - parameters β define the relationship between predictors (X) and outcome (Y)
+-   parameters are estimated from the data using maximum likelihood
+
+Model specification \[simple linear regression\]
+
+-   conditional mean of the outcome is a linear function of the predictor
+
+$$
+E(Y∣X)=β_0+β_1X
+$$
+
+Where:
+
+-   $E(Y \mid X)$ : xpected value of the outcome given the predictors $X$
+
+-   $\beta_0$ : intercept → expected outcome when the predictor equals zero or when all predictors are at their reference values $X = 0$
+
+-   $\beta_1$ : slope → expected change in the outcome for a one-unit change in the predictor $X$
+
+-   $X$ : predictor
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression as Model-Based Estimation
+
+::: {style="font-size:0.6em"}
+-   linear model defines a probability distribution for the observed data
+
+-   likelihood evaluates how plausible different parameter values $(\beta, \sigma^2)$
+
+-   unknown parameters include:
+
+    -   $\beta_0, \beta_1$ : describes how the expected outcome depends on $X$
+    -   $\sigma^2$ : describes how much outcomes vary around the mean
+
+-   likelihood function:
+
+    -   evaluates how plausible the observed data are for different values of $(\beta, \sigma^2)$
+    -   data is fixed and varies the parameter values
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression: Example
+
+::: {style="font-size:0.6em"}
+**Background**: In many clinical and translational studies, immune system activity is measured using circulating biomarkers. One commonly studied marker is interferon-gamma (IFN-γ), a cytokine that plays a central role in immune activation, inflammation, and host defense against infections. IFN-γ is often used to evaluate whether a therapeutic intervention can modify an immune response.
+
+**Aim**: Consider a study designed to evaluate a new therapy compared to a placebo control, where the goal is to understand both biological response and clinical outcomes. The scientific motivation is grounded in questions such as:
+
+-   How does IFN-γ differ across treatment groups?
+-   What is the magnitude of those differences?
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression: Example
+
+::: {style="font-size:0.6em"}
+**Description of the Dataset**
+
+```{r}
+head(biomarker_df, 3)
+```
+
+Each row in the dataset represents one patient enrolled in the study. The variables capture both biological measurements and clinical outcomes:
+
+-   **id**: unique patient identifier
+-   **treatment**: treatment group assignment \[placebo or low dose therapy\]
+-   **ifng**: continuous measurement of IFN-γ concentration \[immune biomarker\]
+-   **response**: binary clinical outcome \[1 = responded to treatment, 0 = no response\]
+-   **infections**: count of infection events during follow-up
+-   **age**: patient age in years
+-   **bmi**: body mass index
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression for IFN-gamma
+
+::: {style="font-size:0.6em"}
+Expected \[average\] IFN-γ level for each treatment group
+
+$$
+E(\text{IFNy∣treatment})=β_0+β_1⋅treatment
+$$
+
+Where:
+
+$\beta_0$ : mean IFN-γ in the reference group \[high-dose group\]\
+$\beta_1$ : difference in mean IFN-γ between low dose treatment and placebo
+
+-   intercept \[$\beta_0$\] : represents the estimated mean IFN-γ in the high-dose group
+-   treatment coefficient \[$\beta_1$\] : represents the estimated difference in mean IFN-γ between groups
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression for IFN-gamma
+
+::: {style="font-size:0.6em"}
+```{r, echo=FALSE}
+fit_lm <- lm(ifng ~ treatment, data = biomarker_df)
+summary(fit_lm)
+```
+
+-   `lm()` function in base R fits linear model
+-   model estimates the average IFN-gamma level as a function of treatment group
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression for IFN-gamma
+
+::: {style="font-size:0.5em"}
+```{r, echo=FALSE}
+fit_lm <- lm(ifng ~ treatment, data = biomarker_df)
+summary(fit_lm)
+```
+
+**Interpretation of Treatment Effects**
+
+Each coefficient represents a difference in mean IFN-γ relative to the reference group \[high dose treatment group\]:
+
+Intercept = 19.55
+
+-   estimated mean IFN-γ in the reference group \[high-dose treatment\]
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression for IFN-gamma
+
+::: {style="font-size:0.5em"}
+```{r, echo=FALSE}
+fit_lm <- lm(ifng ~ treatment, data = biomarker_df)
+summary(fit_lm)
+```
+
+**Interpretation of Treatment Effects**
+
+Low dose: −2.98
+
+-   IFN-γ is about 3 units lower than the high-dose group
+-   p = 0.000294 → strong evidence this difference is real
+
+Placebo: −8.11
+
+-   IFN-γ is about 8 units lower than the high-dose group
+-   p \< 2e−16 → strong evidence of a difference between groups
+:::
+
+------------------------------------------------------------------------
+
+### Linear Regression for IFN-gamma
+
+::: {style="font-size:0.5em"}
+```{r, echo=FALSE}
+fit_lm <- lm(ifng ~ treatment, data = biomarker_df)
+summary(fit_lm)
+```
+
+**Interpretation of Treatment Effects**
+
+Suggested dose–response pattern:
+
+Highest IFN-γ response: high-dose treatment Intermediate IFN-γ response: low dose Lowest IFN-γ response: placebo
+
+-   therapy increases immune activation
+
+-   magnitude of increase is dose-dependent
+
+-   intervention is mechanistically active
+
+-   linear model estimates group-specific mean IFN-γ levels
+
+-   quantifies differences between treatment groups
+:::
+
+------------------------------------------------------------------------
+
+### Visualizing Fitted Means from the Linear Model
+
+```{r, echo=FALSE}
+
+#| fig-width: 4 
+#| fig-height: 3
+
+
+lm_pred_df <- tibble(
+  treatment = c("Placebo", "Low dose", "High dose")
+)
+
+lm_pred_df <- lm_pred_df |>
+  mutate(
+    predicted_ifng = predict(fit_lm, newdata = lm_pred_df)
+  )
+
+ggplot(lm_pred_df, aes(x = treatment, y = predicted_ifng)) +
+  geom_col() +
+  labs(
+    title = "Linear Model Estimated Mean IFN-gamma \n by Treatment",
+    x = "Treatment group",
+    y = "Estimated mean IFN-gamma"
+  ) +
+  theme_bw()
+```
+
+::: {style="font-size:0.5em"}
+**Interpretation**
+
+-   bar plot showing estimated mean IFN-gamma levels for each treatment group based our linear model
+
+-   High dose: estimated mean ≈ 19.6 pg/mL \[model intercept\]
+
+-   Low dose: estimated group mean difference ≈ 16.6 pg/mL \[19.55−2.98=16.57\]
+
+-   Placebo: estimated group mean difference ≈ 11.5 pg/mL \[19.55−8.11=11.45\]
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression
+
+::: {style="font-size:0.6em"}
+**logistic regression** : models how the probability of an event changes across predictors for binary outcomes
+
+-   estimates and interprets how predictors influence the probability of a binary outcome
+
+-   models the probability that an event occurs as a function of predictors
+
+-   model estimates differences in event probability expressed through odds
+
+-   model provides estimated probabilities for each group and uncertainty through standard errors and confidence intervals
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression
+
+::: {style="font-size:0.6em"}
+Model expresses the log-odds of the event as a linear function of the predictors:
+
+$$
+\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 X
+$$
+
+-   formula states that the logarithm of the event odds is modeled as a linear function of the predictors
+
+-   $p$ : probability of the event for a given value of $X$
+
+    e.x.: probability that a patient responds to treatment \[responder vs. non-responder\]
+
+-   $\frac{p}{1-p}$ : compares the probability the event occurs to the probability it does not
+
+    how likely the event is to occur relative to non-occurrence
+
+-   $\log\left(\frac{p}{1-p}\right)$ : log-odds \[logit\]
+
+-   $\beta_0$ : intercept
+
+-   $\beta_1$ : coefficient associated with the predictor
+
+-   $X$ : predictor
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression for Response
+
+::: {style="font-size:0.6em"}
+Research Question:
+
+> How does treatment affect the probability of clinical response?
+
+Where:
+
+-   reference group is the high-dose treatment group
+-   model estimates:
+    -   baseline log-odds \[high dose\]
+    -   differences in log-odds for low dose and placebo
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression for Response
+
+::: {style="font-size:0.6em"}
+```{r, echo=FALSE}
+fit_logit <- glm(response ~ treatment, data = biomarker_df, family = binomial())
+summary(fit_logit)
+```
+
+**Interpretation**
+
+Intercept \[Baseline Probability\]
+
+-   Intercept = 0.928 - log-odds of response in the high-dose group
+
+Treatment Effects
+
+-   treatment coefficients : estimated difference in log-odds of response relative to high dose group
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression for Response
+
+::: {style="font-size:0.6em"}
+**Interpretation**
+
+-   model estimates a difference in log-odds
+-   exponentiating converts this into an odds ratio
+-   odds ratio tells you how many times larger or smaller the odds are in one group compared to a reference group
+
+Low Dose vs High Dose
+
+-   estimate = −1.196
+-   odds ratio = $e^{-1.196}$ ≈0.30
+-   patients on low dose have about 70% lower odds of response compared to high dose
+-   p = 0.002 : statistically significant association
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression for Response
+
+::: {style="font-size:0.6em"}
+**Interpretation**
+
+Placebo vs High Dose
+
+-   estimate = −2.027
+-   odds ratio = $e^{-2.207}$ ≈0.13
+-   placebo patients have about 87% lower odds of response compared to high dose
+-   p \< 0.001 : statistically significant association
+
+Note:
+
+-   odds ratio = 1 : equal odds relative to the reference group
+-   odds ratio \> 1 : higher odds of response than the reference group
+-   odds ratio \< 1 : lower odds of response than the reference group
+:::
+
+------------------------------------------------------------------------
+
+### Logistic Regression for Response
+
+::: {style="font-size:0.6em"}
+Note:
+
+-   odds ratio = 1 : equal odds relative to the reference group
+-   odds ratio \> 1 : higher odds of response than the reference group
+-   odds ratio \< 1 : lower odds of response than the reference group
+:::
+
+------------------------------------------------------------------------
+
+### Review: Model-Based Estimation
+
+::: {style="font-size:0.6em"}
+model-based estimates can:
+
+-   compare multiple groups at once
+-   adjust for additional predictors
+-   provide fitted values on appropriate scales
+-   estimate interpretable contrasts such as mean differences, odds ratios, and rate ratios
+:::
+
+------------------------------------------------------------------------
+
+### Summary
+
+::: {style="font-size:0.6em"}
+-   likelihood evaluates how plausible the observed data are under different parameter values
+-   maximum likelihood estimation selects the parameter values that make the observed data most plausible under the model
+-   probability models and likelihood to extend estimation from summaries to structured predictor-outcome relationships
+-   linear regression models conditional means for continuous outcomes with coefficients representing how the expected population average changes with predictors.
+-   logistic regression models log-odds for binary outcomes and yields odds-ratio interpretations after exponentiation
+-   exponentiated coefficients give odds ratios $\rightarrow$ quantifying relative changes in outcome likelihood
+-   later regression lectures will build on concepts introduced in the current lecture
+:::
+
+------------------------------------------------------------------------
