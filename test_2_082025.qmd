@@ -163,91 +163,139 @@ From the bootstrap distribution, we can estimate:
 
 ------------------------------------------------------------------------
 
-### Example Study Background
+### Example: Estimating Typical Tumor Mutation Burden
 
 ::: {style="font-size:0.68em"}
-Suppose investigators are conducting a clinical study of an **immune-modulating therapy**.
+**Background**
 
-The therapy is designed to alter immune activity, so investigators measure interferon-gamma concentration after treatment.
+Investigators are studying tumor genomic profiles from patients with solid tumors.
 
-**Interferon-gamma (IFN-γ)** is a cytokine involved in immune signaling and inflammatory activation.
+The quantitative genomic measure of interest is tumor mutation burden, or TMB.
 
-In this study, IFN-γ is used as a continuous biomarker that may reflect the degree of immune response among participants.
+Tumor mutation burden is the number of somatic mutations observed per megabase of sequenced tumor DNA.
 
-Our study goals are as follows:
+TMB provides a summary of how many mutations are present in a tumor genome and is commonly used to describe variation in tumor genomic profiles across patients.
 
-Determine:
+In this study, TMB is measured from tumor sequencing data to summarize the mutational profile of the patient cohort.
 
-> What is a typical interferon-gamma (IFN-γ) concentration among patients receiving the immune-modulating therapy?
+Because TMB values are often right-skewed:
 
-Because IFN-γ is continuous and often right-skewed:
+-   many tumors have low-to-moderate mutation burden
+-   fewer tumors have very high mutation burden
+-   extreme values can pull the mean upward
 
--   What is the average IFN-γ level in the study population?
--   What is the median IFN-γ level, representing a typical patient?
+Investigators want to estimate:
+
+> What is a typical tumor mutation burden among patients in this sequencing cohort?
 :::
 
 ------------------------------------------------------------------------
 
-### Example Dataset
+### Simulated Tumor Mutation Burden Dataset
 
 ```{r, echo=FALSE}
 library(tidyverse)
-library(scales)
 
-set.seed(42)
+set.seed(88)
 
-n <- 180
+n <- 220
 
-biomarker_df <- tibble(
-  id = 1:n,
-  treatment = sample(
-    c("Placebo", "Low dose", "High dose"),
+tmb_df <- tibble(
+  patient_id = 1:n,
+  
+  tumor_type = sample(
+    c("Lung", "Colorectal", "Melanoma", "Breast"),
     size = n,
     replace = TRUE,
-    prob = c(0.34, 0.33, 0.33)
+    prob = c(0.30, 0.28, 0.22, 0.20)
   ),
-  age = round(rnorm(n, mean = 58, sd = 11)),
-  bmi = round(rnorm(n, mean = 28, sd = 5), 1),
-  ifng = rgamma(n, shape = 3.2, scale = 4.5),
-  response = rbinom(n, size = 1, prob = 0.48),
-  infections = rpois(n, lambda = 1.4)
-) |>
-  mutate(
-    ifng = round(ifng, 2),
-    log_ifng = log(ifng)
+  
+  tumor_stage = sample(
+    c("I", "II", "III", "IV"),
+    size = n,
+    replace = TRUE,
+    prob = c(0.18, 0.27, 0.31, 0.24)
+  ),
+  
+  age = round(
+    rnorm(
+      n,
+      mean = 62,
+      sd = 10
+    )
+  ),
+  
+  tmb = round(
+    rgamma(
+      n,
+      shape = 2.4,
+      scale = 3.1
+    ),
+    2
+  ),
+  
+  high_tmb_status = rbinom(
+    n,
+    size = 1,
+    prob = 0.34
   )
+)
 
-head(biomarker_df, 5)
+head(tmb_df, 5)
 ```
+
+**Dataset Overview**
+
+each row represents one tumor sample from one patient
+
+-   `tmb` : tumor mutation burden measured as mutations per megabase
+-   `tumor_type` : cancer type represented in the sequencing cohort
+-   `tumor_stage` : clinical stage at sampling
+-   `age` : patient age at sequencing
+-   `high_tmb_status` : binary indicator for whether TMB is at least 10 mutations per megabase
+
+:::
+
+------------------------------------------------------------------------
+
+### Scientific Question and Estimands
 
 ::: {style="font-size:0.52em"}
-**Overview**
+Primary scientific question:
 
--   each row represents one participant
--   `id`: participant identifier
--   `treatment`: placebo, low dose, or high dose
--   `ifng`: interferon-gamma concentration \[continuous and positive\]
--   `response`: whether the participant had a clinical response \[binary\]
--   `infections`: number of infections during follow-up \[count\]
--   `age` and `bmi`: patient characteristics
--   many participants have low-to-moderate values
--   fewer participants have very high values
--   upper tail can pull the mean upward
+> What is a typical tumor mutation burden among patients with solid tumors in the target sequencing population?
+
+Population quantities of interest:
+
+$θ_{mean}$ = population mean tumor mutation burden $θ_{median}$ = population median tumor mutation burden
+
+Corresponding estimators:
+
+$\bar{x}$ = sample mean tumor mutation burden $\bar{x}$ = sample median tumor mutation burden
+
+Bootstrap methods will be used to estimate:
+
+-   standard error of the mean TMB
+-   standard error of the median TMB
+-   stability of each estimator across resampled datasets
 :::
 
 ------------------------------------------------------------------------
 
-### Visualize the Biomarker Distribution
+### Visualize the TMB Distribution
 
 ::: {style="font-size:0.55em"}
 ```{r, echo=FALSE}
-plot <- ggplot(biomarker_df, aes(x = ifng)) +
+plot <- ggplot(
+  tmb_df,
+  aes(x = tmb)
+) +
   geom_histogram(bins = 30) +
   labs(
-    title = "Distribution of IFN-γ Concentration",
-    subtitle = "Right-skewed biomarker distributions are common in biomedical data",
-    x = "IFN-γ concentration",
-    y = "Number of participants"
+    title = "Distribution of Tumor Mutation Burden",
+    subtitle = "Right-skewed genomic measurements are common in \n sequencing data",
+    x = "Tumor mutation burden (mutations per megabase)",
+    y = "Number of tumors"
   ) +
   theme_bw()
 
@@ -256,23 +304,27 @@ plot
 
 **Interpretation of the Distribution**
 
--   histogram shows the distribution of interferon-gamma (IFN-γ) concentrations across study participants
--   distribution is right-skewed \[positively skewed\] $\rightarrow$ because of the skewness the mean is likely larger than the median
+-   histogram shows the distribution of tumor mutation burden across sequenced tumors
+-   distribution is right-skewed positivelyskewed
+-   due to skewness the mean is likely larger than the median
 :::
 
 ------------------------------------------------------------------------
 
-### Visualize the Biomarker Distribution
+### Visualize the TMB Distribution
 
 ::: {style="font-size:0.55em"}
 ```{r, echo=FALSE}
-plot <- ggplot(biomarker_df, aes(x = ifng)) +
+plot <- ggplot(
+  tmb_df,
+  aes(x = tmb)
+) +
   geom_histogram(bins = 30) +
   labs(
-    title = "Distribution of IFN-γ Concentration",
-    subtitle = "Right-skewed biomarker distributions are common in biomedical data",
-    x = "IFN-γ concentration",
-    y = "Number of participants"
+    title = "Distribution of Tumor Mutation Burden",
+    subtitle = "Right-skewed genomic measurements are common in \n sequencing data",
+    x = "Tumor mutation burden (mutations per megabase)",
+    y = "Number of tumors"
   ) +
   theme_bw()
 
@@ -281,33 +333,11 @@ plot
 
 **Interpretation of the Distribution**
 
-Note: mean may overstate a typical biomarker level due to extreme values
+Note: mean may generate an overestimation of the typical tumor mutation burden in this sample because of extreme values
 
--   most participants have moderate IFN-γ values \[10–15 pg/ml\]
--   smaller number of participants have substantially higher values, extending toward 40–50
-:::
-
-------------------------------------------------------------------------
-
-### Estimation Targets
-
-::: {style="font-size:0.68em"}
-We focus on two estimators of a “typical” value:
-
--   **mean IFN-γ** → average leve \[sensitive to extremes\]\
--   **median IFN-γ** → represents the central point of the distribution \[half the observed immune responses fall below and half fall above\] without being influenced by extreme measurements
-
-Let:
-
-$$
-\theta_{mean} = \text{population mean}, \quad
-\theta_{median} = \text{population median}
-$$
-
-Goal: compute point estimates and quantify uncertainty using two approaches:
-
--   analytic \[non-bootstrap estimation\]
--   bootstrap estimation
+-   most tumors contain relatively low-to-moderate TMB values
+-   smaller number of tumors contain substantially elevated mutation burden
+-   long right tail indicates genomic heterogeneity across tumors
 :::
 
 ------------------------------------------------------------------------
@@ -319,7 +349,7 @@ Goal: compute point estimates and quantify uncertainty using two approaches:
 
 Each bootstrap iteration executes the following:
 
-**1. resample IFN-γ values** with replacement
+**1. resample TMB values** with replacement
 
 -   after a value is selected, it is returned to the dataset and can be selected again
 -   allowing the bootstrap sample to:
@@ -337,519 +367,322 @@ After many iterations the collection of estimates approximates the sampling dist
 
 ------------------------------------------------------------------------
 
-### Compute Sample Estimates
+### Extract the Variable
 
 ::: {style="font-size:0.6em"}
 ```{r}
-mean_ifng <- mean(biomarker_df$ifng)
-median_ifng <- median(biomarker_df$ifng)
+tmb_values <- tmb_df$tmb
 
-tibble(
-  mean_ifng = mean_ifng,
-  median_ifng = median_ifng
+head(tmb_values)
+```
+
+**Notes**
+
+-   `tmb_df$tmb` extracts the tumor mutation burden column
+-   bootstrap resampling operates on the observed TMB measurements
+-   vector contains one TMB value per tumor sample
+:::
+
+------------------------------------------------------------------------
+
+### Generate One Bootstrap Sample
+
+::: {style="font-size:0.6em"}
+```{r}
+set.seed(100)
+
+bootstrap_sample <- sample(
+  x = tmb_values,
+  size = length(tmb_values),
+  replace = TRUE
 )
+
+head(bootstrap_sample)
+```
+
+**Notes**
+
+-   `sample()` draws observations from the original TMB values
+
+-   `x = tmb_values`
+
+    -   variable that stores values being resampled
+
+-   `size = length(tmb_values)`
+
+    -   bootstrap sample has the same size as the original dataset
+
+-   `replace = TRUE`
+
+    -   observations can appear more than once
+:::
+
+------------------------------------------------------------------------
+
+### Compute an Estimator
+
+::: {style="font-size:0.6em"}
+```{r}
+mean(bootstrap_sample)
+median(bootstrap_sample)
+```
+
+-   represents estimators \[sample mean and median TMB\] from a single bootstrap sample
+
+After generating the resample:
+
+-   compute the estimator of interest
+-   store the result
+-   repeat many times
+:::
+
+------------------------------------------------------------------------
+
+### Bootstrap for the Mean TMB
+
+::: {style="font-size:0.6em"}
+```{r}
+set.seed(222)
+
+boot_means <- replicate(2000, {
+
+  x_star <- sample(
+    tmb_df$tmb,
+    size = nrow(tmb_df),
+    replace = TRUE
+  )
+
+  mean(x_star)
+
+})
+
+head(boot_means)
+```
+
+**Notes**
+
+-   `replicate(2000, { ... })` : repeats the bootstrap procedure 2000 times
+
+Within each iteration:
+
+-   generate a bootstrap resample of TMB values
+-   compute the sample mean TMB
+-   return the computed value
+
+Result:
+
+-   `boot_means` contains 2000 bootstrap estimates
+-   collection approximates the sampling distribution of the mean TMB
+:::
+
+------------------------------------------------------------------------
+
+### Convert Estimates into a Distribution
+
+::: {style="font-size:0.6em"}
+```{r, echo=FALSE}
+boot_mean_df <- tibble(
+  mean_tmb = boot_means
+)
+
+plot <- ggplot(boot_mean_df, aes(x = mean_tmb)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Bootstrap Distribution of the Mean TMB",
+    x = "Bootstrap Mean TMB",
+    y = "Count"
+  ) +
+  theme_bw()
+
+plot
 ```
 
 **Interpretation**
 
--   mean IFN-γ \[14.6 pg/mL\] : average across all participants
--   median IFN-γ \[12.5 pg/mL\] : value that splits the sample in half
--   mean is larger than the median and consistent with right-skewed distribution where higher values pull the average upward
+-   each bar represents bootstrap-estimated mean TMB values
+-   histogram approximates the sampling distribution of the mean
+-   spread reflects sampling variability
 
-Note each of these values are point estimates:
+Narrow distribution:
 
--   each is a single-number summary computed from this sample
--   each serves as an estimate of a corresponding population quantity
+-   mean TMB is relatively stable across resamples
+
+Wide distribution:
+
+-   mean TMB varies more across resampled datasets
 :::
 
 ------------------------------------------------------------------------
 
-### Compute Sample Estimates
+### Bootstrap for the Median TMB
 
-::: {style="font-size:0.5em"}
+::: {style="font-size:0.6em"}
 ```{r}
-mean_ifng <- mean(biomarker_df$ifng)
-median_ifng <- median(biomarker_df$ifng)
+set.seed(333)
+
+boot_medians <- replicate(2000, {
+
+  x_star <- sample(
+    tmb_df$tmb,
+    size = nrow(tmb_df),
+    replace = TRUE
+  )
+
+  median(x_star)
+
+})
+
+head(boot_medians)
+```
+
+**Notes**
+
+-   code repeats the same bootstrap procedure for median
+-   boot_medians contains 2000 bootstrap median TMB estimates
+-   distribution approximates the sampling distribution of the median TMB
+:::
+
+------------------------------------------------------------------------
+
+### Convert Estimates into a Distribution
+
+::: {style="font-size:0.6em"}
+```{r, echo=FALSE}
+boot_median_df <- tibble(
+  median_tmb = boot_medians
+)
+
+plot <- ggplot(boot_median_df, aes(x = median_tmb)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Bootstrap Distribution of the Median TMB",
+    x = "Bootstrap Median TMB",
+    y = "Count"
+  ) +
+  theme_bw()
+
+plot
+```
+
+**Interpretation**
+
+-   each bar represents bootstrap-estimated median TMB values
+-   histogram approximates the sampling distribution of the median
+-   spread reflects how much the median changes across resamples
+-   median is less affected by extreme high TMB values
+-   bootstrap helps quantify uncertainty for this robust estimator
+:::
+
+------------------------------------------------------------------------
+
+### Estimating the Bootstrap Standard Error
+
+::: {style="font-size:0.4em"}
+```{r}
+boot_mean_se <- sd(boot_means)
+boot_median_se <- sd(boot_medians)
 
 tibble(
-  mean_ifng = mean_ifng,
-  median_ifng = median_ifng
+  estimator = c("Mean TMB", "Median TMB"),
+  bootstrap_se = c(boot_mean_se, boot_median_se)
 )
 ```
 
-**Key Limitations with current values**
-
-Estimates answer:
-
-> What did we observe in this sample?
-
-Estimate values do not answer:
-
-> How much would this estimate change if we repeated the study?
-
-**Motivation for resolving limitations**
-
--   a different sample of patients could produce different values
--   `sampling variability`: amount of variation across sample
--   without quantifying that variability it is difficult to assess:
-    -   how precise these estimates are
-    -   how much confidence to place in them
--   Bootstrap methods allow us to estimate how stable these values are across repeated samples
-:::
-
-------------------------------------------------------------------------
-
-### Determine Mean Uncertainty
-
-::: {style="font-size:0.66em"}
-Compute the following values for the sample mean:
-
--   standard error \[SE\] : metric that describes variability of the estimator
--   confidence interval : describes plausible population values
+-   bootstrap standard error is computed directly from the bootstrap estimates
+-   measures how much the estimator varies across repeated resamples
 
 $$
-SE(\bar{x}) = \frac{s}{\sqrt{n}}
-$$
+SE_{\mathrm{boot}}
+=
+\sqrt{
+\frac{1}{B - 1}
+\sum_{b=1}^{B}
+(\theta_b^* - \bar{\theta}^*)^2
+}
+$$ Where:
 
-Assumptions:
-
--   sample is sufficiently large
--   sampling distribution of the mean is approximately normal extreme skewness or outliers do not dominate the sample
+-   $B$ : number of bootstrap resamples
+-   $\hat{\theta}_b$ : estimator from bootstrap sample $b$
+-   $\bar{\hat{\theta}}$ : average bootstrap estimate
 :::
 
 ------------------------------------------------------------------------
 
-### Determine Mean Uncertainty
+### Bootstrap Confidence Interval
 
-::: {style="font-size:0.66em"}
+::: {style="font-size:0.4em"}
 ```{r}
-mean_se <- sd(biomarker_df$ifng) / sqrt(nrow(biomarker_df))
-mean_ci <- mean_ifng + c(-1.96, 1.96) * mean_se
+
+mean_ci <- quantile(
+  boot_means,
+  probs = c(0.025, 0.975)
+)
+
+median_ci <- quantile(
+  boot_medians,
+  probs = c(0.025, 0.975)
+)
 
 tibble(
-  mean = mean_ifng,
-  se = mean_se,
-  lower = mean_ci[1],
-  upper = mean_ci[2]
+  estimator = c("Mean TMB", "Median TMB"),
+  lower_95_ci = c(mean_ci[1], median_ci[1]),
+  upper_95_ci = c(mean_ci[2], median_ci[2])
 )
 ```
 
 **Interpretation**
 
--   population average IFN-γ: 14.6 pg/mL
--   true population mean IFN-γ lies between 13.3 and 15.8 pg/mL
--   standard error: 0.622
-    -   if we repeated the study many times $\rightarrow$ mean would vary by about 0.6 units
-:::
+-   confidence intervals contain the middle 95% of estimates generated from repeated bootstrap resampling
 
-------------------------------------------------------------------------
+For a 95% bootstrap confidence interval:
 
-### Estimating Median
+-   lower bound is the 2.5th percentile of the bootstrap estimates
 
-::: {style="font-size:0.68em"}
--   median is often an ideal metric for skewed data
--   metirc represents a typical patient without being influenced by extreme values.
--   median is not defined by magnitude
--   depends on the ordering of the data
--   not the numerical contribution of each value
--   small changes near the center can shift the median
--   large changes in extreme values may have no effect
-:::
+-   upper bound is the 97.5th percentile of the bootstrap estimates
 
-------------------------------------------------------------------------
+-   each bootstrap estimate represents one possible estimate of population TMB obtained from a resampled version of the observed sequencing dataset
 
-### Median Estimation
+-   some bootstrap estimates are smaller and some are larger because sampling variability causes estimates to fluctuate across samples
 
-::: {style="font-size:0.68em"}
-```{r, echo=FALSE}
-location_summary <- biomarker_df |>
-  summarise(
-    # Core estimator
-    median_ifng = median(ifng),
-    
-    # Spread around the median
-    iqr_ifng = IQR(ifng),
-    
-    # Key quantiles for interpretation
-    q25 = quantile(ifng, 0.25),
-    q75 = quantile(ifng, 0.75),
-    q90 = quantile(ifng, 0.90)
-  )
-
-location_summary
-```
-
-**Interpretation**
-
-**Median**
-
--   median IFN-γ : 15.62 pg/mL
-
-**Interquartile Range \[IQR\]**
-
-IQR: 7.99 pg/mL
-
--   width of that middle range
--   indicates a moderate spread around the typical value
-:::
-
-------------------------------------------------------------------------
-
-### Median Estimation
-
-::: {style="font-size:0.68em"}
-```{r, echo=FALSE}
-location_summary <- biomarker_df |>
-  summarise(
-    # Core estimator
-    median_ifng = median(ifng),
-    
-    # Spread around the median
-    iqr_ifng = IQR(ifng),
-    
-    # Key quantiles for interpretation
-    q25 = quantile(ifng, 0.25),
-    q75 = quantile(ifng, 0.75),
-    q90 = quantile(ifng, 0.90)
-  )
-
-location_summary
-```
-
-**Interpretation**
-
-**q90**: describes upper tail of the distribution or unusually high IFN-γ responses
-
-Q90 = 23.27 pg/mL
-
--   90% of participants are below this value
--   top 10% of patients have values exceed \~23 pg/mL
-
-**First \[Q1\] and Third Quartile**
-
-Q25 = 11.52 pg/mL Q75 = 19.51 pg/mL
-
--   middle 50% of participants have IFN-γ values between \~11.5 and \~19.5 pg/mL
-:::
-
-------------------------------------------------------------------------
-
-### Distribution Comparison: Closed-Form vs Bootstrap
-
-::: {style="font-size:0.64em"}
-```{r, echo=FALSE}
-library(tidyverse)
-
-# ---------------------------------------
-# Setup
-# ---------------------------------------
-
-mean_ifng <- mean(biomarker_df$ifng)
-n <- nrow(biomarker_df)
-sd_ifng <- sd(biomarker_df$ifng)
-se_closed <- sd_ifng / sqrt(n)
-
-# ---------------------------------------
-# Bootstrap distribution (empirical)
-# ---------------------------------------
-
-set.seed(901)
-
-boot_means <- replicate(2000, {
-  x_star <- sample(
-    biomarker_df$ifng,
-    size = n,
-    replace = TRUE
-  )
-  mean(x_star)
-})
-
-boot_df <- tibble(
-  value = boot_means,
-  method = "Bootstrap (empirical)"
-)
-
-# ---------------------------------------
-# Closed-form distribution (theoretical)
-# ---------------------------------------
-
-theory_means <- rnorm(
-  2000,
-  mean = mean_ifng,
-  sd = se_closed
-)
-
-theory_df <- tibble(
-  value = theory_means,
-  method = "Closed-form \n (normal approximation)"
-)
-
-# ---------------------------------------
-# Combine and plot
-# ---------------------------------------
-
-plot_df <- bind_rows(boot_df, theory_df)
-
-plot <- ggplot(plot_df, aes(x = value)) +
-  geom_histogram(bins = 30) +
-  facet_wrap(~method, scales = "free_y") +
-  geom_vline(
-    xintercept = mean_ifng,
-    linetype = "dashed"
-  ) +
-  labs(
-    title = "Sampling Distribution of the Mean: Closed-Form vs Bootstrap",
-    subtitle = "Both represent how the sample mean varies across repeated samples",
-    x = "Sample Mean IFN-γ (pg/mL)",
-    y = "Count"
-  ) +
-  theme_bw()
-plot
-```
-
-**Objective(s)**:
-
--   compare two approaches for approximating IFN-γ population mean
-    -   evaluate whether a closed form approximation and a data-driven method \[bootstrap\] produce similar representations of uncertainty
-:::
-
-------------------------------------------------------------------------
-
-### Distribution Comparison: Closed-Form vs Bootstrap
-
-```{r, echo=FALSE}
-
-#| fig-width: 4
-#| fig-height: 3
-#| 
-library(tidyverse)
-
-# ---------------------------------------
-# Setup
-# ---------------------------------------
-
-mean_ifng <- mean(biomarker_df$ifng)
-n <- nrow(biomarker_df)
-sd_ifng <- sd(biomarker_df$ifng)
-se_closed <- sd_ifng / sqrt(n)
-
-# ---------------------------------------
-# Bootstrap distribution (empirical)
-# ---------------------------------------
-
-set.seed(901)
-
-boot_means <- replicate(2000, {
-  x_star <- sample(
-    biomarker_df$ifng,
-    size = n,
-    replace = TRUE
-  )
-  mean(x_star)
-})
-
-boot_df <- tibble(
-  value = boot_means,
-  method = "Bootstrap (empirical)"
-)
-
-# ---------------------------------------
-# Closed-form distribution (theoretical)
-# ---------------------------------------
-
-theory_means <- rnorm(
-  2000,
-  mean = mean_ifng,
-  sd = se_closed
-)
-
-theory_df <- tibble(
-  value = theory_means,
-  method = "Closed-form \n (normal approximation)"
-)
-
-# ---------------------------------------
-# Combine and plot
-# ---------------------------------------
-
-plot_df <- bind_rows(boot_df, theory_df)
-
-plot <- ggplot(plot_df, aes(x = value)) +
-  geom_histogram(bins = 30) +
-  facet_wrap(~method, scales = "free_y") +
-  geom_vline(
-    xintercept = mean_ifng,
-    linetype = "dashed"
-  ) +
-  labs(
-    title = "Sampling Distribution of the Mean: Closed-Form vs Bootstrap",
-    subtitle = "Both represent how the sample mean varies across repeated samples",
-    x = "Sample Mean IFN-γ (pg/mL)",
-    y = "Count"
-  ) +
-  theme_bw()
-
-```
-
-::: {style="font-size:0.55em"}
-```{r}
-#| fig-width: 4
-#| fig-height: 3
-
-plot
-```
-
-**Interpretation**
-
-**Bootstrap Panel**
-
--   2000 resampled datasets drawn from the observed data \[n = 180 patients\]
-
-**Closed-form panel**:
-
--   2000 simulated values drawn from a theoretical distribution
--   each value represents a possible sample mean
-:::
-
-------------------------------------------------------------------------
-
-### Distribution Comparison: Closed-Form vs Bootstrap
-
-```{r, echo=FALSE}
-
-#| fig-width: 4
-#| fig-height: 3
-#| 
-library(tidyverse)
-
-# ---------------------------------------
-# Setup
-# ---------------------------------------
-
-mean_ifng <- mean(biomarker_df$ifng)
-n <- nrow(biomarker_df)
-sd_ifng <- sd(biomarker_df$ifng)
-se_closed <- sd_ifng / sqrt(n)
-
-# ---------------------------------------
-# Bootstrap distribution (empirical)
-# ---------------------------------------
-
-set.seed(901)
-
-boot_means <- replicate(2000, {
-  x_star <- sample(
-    biomarker_df$ifng,
-    size = n,
-    replace = TRUE
-  )
-  mean(x_star)
-})
-
-boot_df <- tibble(
-  value = boot_means,
-  method = "Bootstrap (empirical)"
-)
-
-# ---------------------------------------
-# Closed-form distribution (theoretical)
-# ---------------------------------------
-
-theory_means <- rnorm(
-  2000,
-  mean = mean_ifng,
-  sd = se_closed
-)
-
-theory_df <- tibble(
-  value = theory_means,
-  method = "Closed-form \n (normal approximation)"
-)
-
-# ---------------------------------------
-# Combine and plot
-# ---------------------------------------
-
-plot_df <- bind_rows(boot_df, theory_df)
-
-plot <- ggplot(plot_df, aes(x = value)) +
-  geom_histogram(bins = 30) +
-  facet_wrap(~method, scales = "free_y") +
-  geom_vline(
-    xintercept = mean_ifng,
-    linetype = "dashed"
-  ) +
-  labs(
-    title = "Sampling Distribution of the Mean: Closed-Form vs Bootstrap",
-    subtitle = "Both represent how the sample mean varies across repeated samples",
-    x = "Sample Mean IFN-γ (pg/mL)",
-    y = "Count"
-  ) +
-  theme_bw()
-
-```
-
-::: {style="font-size:0.55em"}
-```{r}
-#| fig-width: 4
-#| fig-height: 3
-
-plot
-```
-
-**Comparison**
-
--   each histogram represents \~2000 possible sample means
--   dashed line marks the observed sample mean
--   both panels show \~2000 possible values of the sample mean
--   bootstrap generates values by resampling full datasets
--   closed-form approach generates values directly from a theoretical normal distribution
--   both bootstrap and closed-form methods produce similar sampling distributions for the mean
--   indicates that bootstrap based estimate is stable across repeated samples
-:::
-
-------------------------------------------------------------------------
-
-### Summary: Bootstrap and Robust Estimation
-
-::: {style="font-size:0.64em"}
-Bootstrap and robust methods solve related but distinct problems.
-
-**Bootstrap**
-
--   estimates uncertainty
--   approximates the sampling distribution
--   supports standard errors and intervals
-
-**Robust estimation**
-
--   improves stability
--   reduces sensitivity to extreme values
--   helps summarize skewed biomedical data
-
-Together, they strengthen estimation when classical assumptions are fragile.
+-   confidence interval summarizes the range of population TMB values that remain plausible given the observed data and the observed variability across resamples
 :::
 
 ------------------------------------------------------------------------
 
 ### Summary
 
-::: {style="font-size:0.66em"}
--   estimates vary across repeated samples
+::: {style="font-size:0.4em"}
+-   point estimates summarize characteristics of a population using observed sample data
 
--   point estimates summarize values from a single dataset\
+-   different samples produce different estimates because of sampling variability
 
--   sampling variability determines how estimates change
+-   bootstrap resampling approximates repeated sampling directly from the observed dataset
 
-In practice:
+-   bootstrap methods repeatedly:
 
--   different samples produce different estimates\
+    -   resample the data with replacement
+    -   recompute the estimator
+    -   form an empirical sampling distribution
 
--   stability of an estimate depends on data structure and sample size
+bootstrap distributions can be used to estimate:
 
--   **bootstrap methods**: resample observed data to approximate the sampling distribution
-
--   multiple approaches can yield similar conclusions\
-
--   agreement between methods supports stability of the estimate
+-   standard errors
+-   confidence intervals
+-   estimator stability
 :::
+
+------------------------------------------------------------------------
+
+### Summary
+
+::: {style="font-size:0.4em"}
+-   point estimates summarize characteristics of a population using observed sample datbootstrap confidence intervals summarize the range of population values that remain plausible given the observed data and the variability observed across bootstrap resamples
+
+-   bootstrap methods are especially useful when:
+
+    -   distributions are skewed
+    -   assumptions underlying closed-form methods may be fragile
+    -   estimators do not have simple analytic standard error formulas
+:::
+
+------------------------------------------------------------------------

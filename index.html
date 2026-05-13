@@ -302,58 +302,75 @@
 </section>
 <section class="slide level2">
 
-<h3 id="example-study-background">Example Study Background</h3>
+<h3 id="example-estimating-typical-tumor-mutation-burden">Example: Estimating Typical Tumor Mutation Burden</h3>
 <div style="font-size:0.68em">
-<p>Suppose investigators are conducting a clinical study of an <strong>immune-modulating therapy</strong>.</p>
-<p>The therapy is designed to alter immune activity, so investigators measure interferon-gamma concentration after treatment.</p>
-<p><strong>Interferon-gamma (IFN-γ)</strong> is a cytokine involved in immune signaling and inflammatory activation.</p>
-<p>In this study, IFN-γ is used as a continuous biomarker that may reflect the degree of immune response among participants.</p>
-<p>Our study goals are as follows:</p>
-<p>Determine:</p>
-<blockquote>
-<p>What is a typical interferon-gamma (IFN-γ) concentration among patients receiving the immune-modulating therapy?</p>
-</blockquote>
-<p>Because IFN-γ is continuous and often right-skewed:</p>
+<p><strong>Background</strong></p>
+<p>Investigators are studying tumor genomic profiles from patients with solid tumors.</p>
+<p>The quantitative genomic measure of interest is tumor mutation burden, or TMB.</p>
+<p>Tumor mutation burden is the number of somatic mutations observed per megabase of sequenced tumor DNA.</p>
+<p>TMB provides a summary of how many mutations are present in a tumor genome and is commonly used to describe variation in tumor genomic profiles across patients.</p>
+<p>In this study, TMB is measured from tumor sequencing data to summarize the mutational profile of the patient cohort.</p>
+<p>Because TMB values are often right-skewed:</p>
 <ul>
-<li>What is the average IFN-γ level in the study population?</li>
-<li>What is the median IFN-γ level, representing a typical patient?</li>
+<li>many tumors have low-to-moderate mutation burden</li>
+<li>fewer tumors have very high mutation burden</li>
+<li>extreme values can pull the mean upward</li>
 </ul>
+<p>Investigators want to estimate:</p>
+<blockquote>
+<p>What is a typical tumor mutation burden among patients in this sequencing cohort?</p>
+</blockquote>
 </div>
 </section>
 <section class="slide level2">
 
-<h3 id="example-dataset">Example Dataset</h3>
+<h3 id="simulated-tumor-mutation-burden-dataset">Simulated Tumor Mutation Burden Dataset</h3>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 5 × 8
-     id treatment   age   bmi  ifng response infections log_ifng
-  &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;int&gt;      &lt;int&gt;    &lt;dbl&gt;
-1     1 Low dose     73  30.9  4.42        0          0    1.49 
-2     2 Low dose     53  28.2  1.16        0          2    0.148
-3     3 Placebo      65  28.8  9.35        0          0    2.24 
-4     4 Low dose     73  30.2  4.96        0          1    1.60 
-5     5 High dose    46  26   27.1         1          0    3.30 </code></pre>
+<pre><code># A tibble: 5 × 6
+  patient_id tumor_type tumor_stage   age   tmb high_tmb_status
+       &lt;int&gt; &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt; &lt;dbl&gt;           &lt;int&gt;
+1          1 Colorectal III            58  2.7                1
+2          2 Lung       III            76 11.5                0
+3          3 Melanoma   III            76  5.47               0
+4          4 Colorectal II             53 11.0                0
+5          5 Breast     II             54  4.79               0</code></pre>
 </div>
 </div>
-<div style="font-size:0.52em">
-<p><strong>Overview</strong></p>
+<p><strong>Dataset Overview</strong></p>
+<p>each row represents one tumor sample from one patient</p>
 <ul>
-<li>each row represents one participant</li>
-<li><code>id</code>: participant identifier</li>
-<li><code>treatment</code>: placebo, low dose, or high dose</li>
-<li><code>ifng</code>: interferon-gamma concentration [continuous and positive]</li>
-<li><code>response</code>: whether the participant had a clinical response [binary]</li>
-<li><code>infections</code>: number of infections during follow-up [count]</li>
-<li><code>age</code> and <code>bmi</code>: patient characteristics</li>
-<li>many participants have low-to-moderate values</li>
-<li>fewer participants have very high values</li>
-<li>upper tail can pull the mean upward</li>
+<li><code>tmb</code> : tumor mutation burden measured as mutations per megabase</li>
+<li><code>tumor_type</code> : cancer type represented in the sequencing cohort</li>
+<li><code>tumor_stage</code> : clinical stage at sampling</li>
+<li><code>age</code> : patient age at sequencing</li>
+<li><code>high_tmb_status</code> : binary indicator for whether TMB is at least 10 mutations per megabase</li>
+</ul>
+<p>:::</p>
+</section>
+<section class="slide level2">
+
+<h3 id="scientific-question-and-estimands">Scientific Question and Estimands</h3>
+<div style="font-size:0.52em">
+<p>Primary scientific question:</p>
+<blockquote>
+<p>What is a typical tumor mutation burden among patients with solid tumors in the target sequencing population?</p>
+</blockquote>
+<p>Population quantities of interest:</p>
+<p><span class="math inline">\(θ_{mean}\)</span> = population mean tumor mutation burden <span class="math inline">\(θ_{median}\)</span> = population median tumor mutation burden</p>
+<p>Corresponding estimators:</p>
+<p><span class="math inline">\(\bar{x}\)</span> = sample mean tumor mutation burden <span class="math inline">\(\bar{x}\)</span> = sample median tumor mutation burden</p>
+<p>Bootstrap methods will be used to estimate:</p>
+<ul>
+<li>standard error of the mean TMB</li>
+<li>standard error of the median TMB</li>
+<li>stability of each estimator across resampled datasets</li>
 </ul>
 </div>
 </section>
 <section class="slide level2">
 
-<h3 id="visualize-the-biomarker-distribution">Visualize the Biomarker Distribution</h3>
+<h3 id="visualize-the-tmb-distribution">Visualize the TMB Distribution</h3>
 <div style="font-size:0.55em">
 <div class="cell">
 <div class="cell-output-display">
@@ -366,14 +383,15 @@
 </div>
 <p><strong>Interpretation of the Distribution</strong></p>
 <ul>
-<li>histogram shows the distribution of interferon-gamma (IFN-γ) concentrations across study participants</li>
-<li>distribution is right-skewed [positively skewed] <span class="math inline">\(\rightarrow\)</span> because of the skewness the mean is likely larger than the median</li>
+<li>histogram shows the distribution of tumor mutation burden across sequenced tumors</li>
+<li>distribution is right-skewed positivelyskewed</li>
+<li>due to skewness the mean is likely larger than the median</li>
 </ul>
 </div>
 </section>
 <section class="slide level2">
 
-<h3 id="visualize-the-biomarker-distribution-1">Visualize the Biomarker Distribution</h3>
+<h3 id="visualize-the-tmb-distribution-1">Visualize the TMB Distribution</h3>
 <div style="font-size:0.55em">
 <div class="cell">
 <div class="cell-output-display">
@@ -385,32 +403,11 @@
 </div>
 </div>
 <p><strong>Interpretation of the Distribution</strong></p>
-<p>Note: mean may overstate a typical biomarker level due to extreme values</p>
+<p>Note: mean may generate an overestimation of the typical tumor mutation burden in this sample because of extreme values</p>
 <ul>
-<li>most participants have moderate IFN-γ values [10–15 pg/ml]</li>
-<li>smaller number of participants have substantially higher values, extending toward 40–50</li>
-</ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="estimation-targets">Estimation Targets</h3>
-<div style="font-size:0.68em">
-<p>We focus on two estimators of a “typical” value:</p>
-<ul>
-<li><strong>mean IFN-γ</strong> → average leve [sensitive to extremes]<br>
-</li>
-<li><strong>median IFN-γ</strong> → represents the central point of the distribution [half the observed immune responses fall below and half fall above] without being influenced by extreme measurements</li>
-</ul>
-<p>Let:</p>
-<p><span class="math display">\[
-\theta_{mean} = \text{population mean}, \quad
-\theta_{median} = \text{population median}
-\]</span></p>
-<p>Goal: compute point estimates and quantify uncertainty using two approaches:</p>
-<ul>
-<li>analytic [non-bootstrap estimation]</li>
-<li>bootstrap estimation</li>
+<li>most tumors contain relatively low-to-moderate TMB values</li>
+<li>smaller number of tumors contain substantially elevated mutation burden</li>
+<li>long right tail indicates genomic heterogeneity across tumors</li>
 </ul>
 </div>
 </section>
@@ -420,7 +417,7 @@
 <div style="font-size:0.68em">
 <p><code>bootstrap resampling</code>: approximates repeated sampling using the observed data</p>
 <p>Each bootstrap iteration executes the following:</p>
-<p><strong>1. resample IFN-γ values</strong> with replacement</p>
+<p><strong>1. resample TMB values</strong> with replacement</p>
 <ul>
 <li>after a value is selected, it is returned to the dataset and can be selected again</li>
 <li>allowing the bootstrap sample to:
@@ -437,309 +434,332 @@
 </section>
 <section class="slide level2">
 
-<h3 id="compute-sample-estimates">Compute Sample Estimates</h3>
+<h3 id="extract-the-variable">Extract the Variable</h3>
 <div style="font-size:0.6em">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>mean_ifng <span class="ot">&lt;-</span> <span class="fu">mean</span>(biomarker_df<span class="sc">$</span>ifng)</span>
-<span id="cb2-2"><a href=""></a>median_ifng <span class="ot">&lt;-</span> <span class="fu">median</span>(biomarker_df<span class="sc">$</span>ifng)</span>
-<span id="cb2-3"><a href=""></a></span>
-<span id="cb2-4"><a href=""></a><span class="fu">tibble</span>(</span>
-<span id="cb2-5"><a href=""></a>  <span class="at">mean_ifng =</span> mean_ifng,</span>
-<span id="cb2-6"><a href=""></a>  <span class="at">median_ifng =</span> median_ifng</span>
-<span id="cb2-7"><a href=""></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>tmb_values <span class="ot">&lt;-</span> tmb_df<span class="sc">$</span>tmb</span>
+<span id="cb2-2"><a href=""></a></span>
+<span id="cb2-3"><a href=""></a><span class="fu">head</span>(tmb_values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 2
-  mean_ifng median_ifng
-      &lt;dbl&gt;       &lt;dbl&gt;
-1      14.6        12.5</code></pre>
+<pre><code>[1]  2.70 11.49  5.47 10.97  4.79  2.61</code></pre>
+</div>
+</div>
+<p><strong>Notes</strong></p>
+<ul>
+<li><code>tmb_df$tmb</code> extracts the tumor mutation burden column</li>
+<li>bootstrap resampling operates on the observed TMB measurements</li>
+<li>vector contains one TMB value per tumor sample</li>
+</ul>
+</div>
+</section>
+<section class="slide level2">
+
+<h3 id="generate-one-bootstrap-sample">Generate One Bootstrap Sample</h3>
+<div style="font-size:0.6em">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb4-2"><a href=""></a></span>
+<span id="cb4-3"><a href=""></a>bootstrap_sample <span class="ot">&lt;-</span> <span class="fu">sample</span>(</span>
+<span id="cb4-4"><a href=""></a>  <span class="at">x =</span> tmb_values,</span>
+<span id="cb4-5"><a href=""></a>  <span class="at">size =</span> <span class="fu">length</span>(tmb_values),</span>
+<span id="cb4-6"><a href=""></a>  <span class="at">replace =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-7"><a href=""></a>)</span>
+<span id="cb4-8"><a href=""></a></span>
+<span id="cb4-9"><a href=""></a><span class="fu">head</span>(bootstrap_sample)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  7.07 10.67  6.62  2.05  1.89 11.13</code></pre>
+</div>
+</div>
+<p><strong>Notes</strong></p>
+<ul>
+<li><p><code>sample()</code> draws observations from the original TMB values</p></li>
+<li><p><code>x = tmb_values</code></p>
+<ul>
+<li>variable that stores values being resampled</li>
+</ul></li>
+<li><p><code>size = length(tmb_values)</code></p>
+<ul>
+<li>bootstrap sample has the same size as the original dataset</li>
+</ul></li>
+<li><p><code>replace = TRUE</code></p>
+<ul>
+<li>observations can appear more than once</li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section class="slide level2">
+
+<h3 id="compute-an-estimator">Compute an Estimator</h3>
+<div style="font-size:0.6em">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">mean</span>(bootstrap_sample)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7.538273</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">median</span>(bootstrap_sample)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7.005</code></pre>
+</div>
+</div>
+<ul>
+<li>represents estimators [sample mean and median TMB] from a single bootstrap sample</li>
+</ul>
+<p>After generating the resample:</p>
+<ul>
+<li>compute the estimator of interest</li>
+<li>store the result</li>
+<li>repeat many times</li>
+</ul>
+</div>
+</section>
+<section class="slide level2">
+
+<h3 id="bootstrap-for-the-mean-tmb">Bootstrap for the Mean TMB</h3>
+<div style="font-size:0.6em">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">222</span>)</span>
+<span id="cb10-2"><a href=""></a></span>
+<span id="cb10-3"><a href=""></a>boot_means <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">2000</span>, {</span>
+<span id="cb10-4"><a href=""></a></span>
+<span id="cb10-5"><a href=""></a>  x_star <span class="ot">&lt;-</span> <span class="fu">sample</span>(</span>
+<span id="cb10-6"><a href=""></a>    tmb_df<span class="sc">$</span>tmb,</span>
+<span id="cb10-7"><a href=""></a>    <span class="at">size =</span> <span class="fu">nrow</span>(tmb_df),</span>
+<span id="cb10-8"><a href=""></a>    <span class="at">replace =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-9"><a href=""></a>  )</span>
+<span id="cb10-10"><a href=""></a></span>
+<span id="cb10-11"><a href=""></a>  <span class="fu">mean</span>(x_star)</span>
+<span id="cb10-12"><a href=""></a></span>
+<span id="cb10-13"><a href=""></a>})</span>
+<span id="cb10-14"><a href=""></a></span>
+<span id="cb10-15"><a href=""></a><span class="fu">head</span>(boot_means)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7.447818 7.735682 7.742182 7.226182 7.382591 8.189727</code></pre>
+</div>
+</div>
+<p><strong>Notes</strong></p>
+<ul>
+<li><code>replicate(2000, { ... })</code> : repeats the bootstrap procedure 2000 times</li>
+</ul>
+<p>Within each iteration:</p>
+<ul>
+<li>generate a bootstrap resample of TMB values</li>
+<li>compute the sample mean TMB</li>
+<li>return the computed value</li>
+</ul>
+<p>Result:</p>
+<ul>
+<li><code>boot_means</code> contains 2000 bootstrap estimates</li>
+<li>collection approximates the sampling distribution of the mean TMB</li>
+</ul>
+</div>
+</section>
+<section class="slide level2">
+
+<h3 id="convert-estimates-into-a-distribution">Convert Estimates into a Distribution</h3>
+<div style="font-size:0.6em">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="test_2_082025_files/figure-revealjs/unnamed-chunk-8-1.png" width="960"></p>
+</figure>
+</div>
 </div>
 </div>
 <p><strong>Interpretation</strong></p>
 <ul>
-<li>mean IFN-γ [14.6 pg/mL] : average across all participants</li>
-<li>median IFN-γ [12.5 pg/mL] : value that splits the sample in half</li>
-<li>mean is larger than the median and consistent with right-skewed distribution where higher values pull the average upward</li>
+<li>each bar represents bootstrap-estimated mean TMB values</li>
+<li>histogram approximates the sampling distribution of the mean</li>
+<li>spread reflects sampling variability</li>
 </ul>
-<p>Note each of these values are point estimates:</p>
+<p>Narrow distribution:</p>
 <ul>
-<li>each is a single-number summary computed from this sample</li>
-<li>each serves as an estimate of a corresponding population quantity</li>
+<li>mean TMB is relatively stable across resamples</li>
+</ul>
+<p>Wide distribution:</p>
+<ul>
+<li>mean TMB varies more across resampled datasets</li>
 </ul>
 </div>
 </section>
 <section class="slide level2">
 
-<h3 id="compute-sample-estimates-1">Compute Sample Estimates</h3>
-<div style="font-size:0.5em">
+<h3 id="bootstrap-for-the-median-tmb">Bootstrap for the Median TMB</h3>
+<div style="font-size:0.6em">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>mean_ifng <span class="ot">&lt;-</span> <span class="fu">mean</span>(biomarker_df<span class="sc">$</span>ifng)</span>
-<span id="cb4-2"><a href=""></a>median_ifng <span class="ot">&lt;-</span> <span class="fu">median</span>(biomarker_df<span class="sc">$</span>ifng)</span>
-<span id="cb4-3"><a href=""></a></span>
-<span id="cb4-4"><a href=""></a><span class="fu">tibble</span>(</span>
-<span id="cb4-5"><a href=""></a>  <span class="at">mean_ifng =</span> mean_ifng,</span>
-<span id="cb4-6"><a href=""></a>  <span class="at">median_ifng =</span> median_ifng</span>
-<span id="cb4-7"><a href=""></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">333</span>)</span>
+<span id="cb12-2"><a href=""></a></span>
+<span id="cb12-3"><a href=""></a>boot_medians <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">2000</span>, {</span>
+<span id="cb12-4"><a href=""></a></span>
+<span id="cb12-5"><a href=""></a>  x_star <span class="ot">&lt;-</span> <span class="fu">sample</span>(</span>
+<span id="cb12-6"><a href=""></a>    tmb_df<span class="sc">$</span>tmb,</span>
+<span id="cb12-7"><a href=""></a>    <span class="at">size =</span> <span class="fu">nrow</span>(tmb_df),</span>
+<span id="cb12-8"><a href=""></a>    <span class="at">replace =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-9"><a href=""></a>  )</span>
+<span id="cb12-10"><a href=""></a></span>
+<span id="cb12-11"><a href=""></a>  <span class="fu">median</span>(x_star)</span>
+<span id="cb12-12"><a href=""></a></span>
+<span id="cb12-13"><a href=""></a>})</span>
+<span id="cb12-14"><a href=""></a></span>
+<span id="cb12-15"><a href=""></a><span class="fu">head</span>(boot_medians)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 2
-  mean_ifng median_ifng
-      &lt;dbl&gt;       &lt;dbl&gt;
-1      14.6        12.5</code></pre>
+<pre><code>[1] 6.515 6.985 7.150 5.970 7.070 6.730</code></pre>
 </div>
 </div>
-<p><strong>Key Limitations with current values</strong></p>
-<p>Estimates answer:</p>
-<blockquote>
-<p>What did we observe in this sample?</p>
-</blockquote>
-<p>Estimate values do not answer:</p>
-<blockquote>
-<p>How much would this estimate change if we repeated the study?</p>
-</blockquote>
-<p><strong>Motivation for resolving limitations</strong></p>
+<p><strong>Notes</strong></p>
 <ul>
-<li>a different sample of patients could produce different values</li>
-<li><code>sampling variability</code>: amount of variation across sample</li>
-<li>without quantifying that variability it is difficult to assess:
-<ul>
-<li>how precise these estimates are</li>
-<li>how much confidence to place in them</li>
-</ul></li>
-<li>Bootstrap methods allow us to estimate how stable these values are across repeated samples</li>
+<li>code repeats the same bootstrap procedure for median</li>
+<li>boot_medians contains 2000 bootstrap median TMB estimates</li>
+<li>distribution approximates the sampling distribution of the median TMB</li>
 </ul>
 </div>
 </section>
 <section class="slide level2">
 
-<h3 id="determine-mean-uncertainty">Determine Mean Uncertainty</h3>
-<div style="font-size:0.66em">
-<p>Compute the following values for the sample mean:</p>
+<h3 id="convert-estimates-into-a-distribution-1">Convert Estimates into a Distribution</h3>
+<div style="font-size:0.6em">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="test_2_082025_files/figure-revealjs/unnamed-chunk-10-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Interpretation</strong></p>
 <ul>
-<li>standard error [SE] : metric that describes variability of the estimator</li>
-<li>confidence interval : describes plausible population values</li>
+<li>each bar represents bootstrap-estimated median TMB values</li>
+<li>histogram approximates the sampling distribution of the median</li>
+<li>spread reflects how much the median changes across resamples</li>
+<li>median is less affected by extreme high TMB values</li>
+<li>bootstrap helps quantify uncertainty for this robust estimator</li>
+</ul>
+</div>
+</section>
+<section class="slide level2">
+
+<h3 id="estimating-the-bootstrap-standard-error">Estimating the Bootstrap Standard Error</h3>
+<div style="font-size:0.4em">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>boot_mean_se <span class="ot">&lt;-</span> <span class="fu">sd</span>(boot_means)</span>
+<span id="cb14-2"><a href=""></a>boot_median_se <span class="ot">&lt;-</span> <span class="fu">sd</span>(boot_medians)</span>
+<span id="cb14-3"><a href=""></a></span>
+<span id="cb14-4"><a href=""></a><span class="fu">tibble</span>(</span>
+<span id="cb14-5"><a href=""></a>  <span class="at">estimator =</span> <span class="fu">c</span>(<span class="st">"Mean TMB"</span>, <span class="st">"Median TMB"</span>),</span>
+<span id="cb14-6"><a href=""></a>  <span class="at">bootstrap_se =</span> <span class="fu">c</span>(boot_mean_se, boot_median_se)</span>
+<span id="cb14-7"><a href=""></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  estimator  bootstrap_se
+  &lt;chr&gt;             &lt;dbl&gt;
+1 Mean TMB          0.310
+2 Median TMB        0.369</code></pre>
+</div>
+</div>
+<ul>
+<li>bootstrap standard error is computed directly from the bootstrap estimates</li>
+<li>measures how much the estimator varies across repeated resamples</li>
 </ul>
 <p><span class="math display">\[
-SE(\bar{x}) = \frac{s}{\sqrt{n}}
-\]</span></p>
-<p>Assumptions:</p>
+SE_{\mathrm{boot}}
+=
+\sqrt{
+\frac{1}{B - 1}
+\sum_{b=1}^{B}
+(\theta_b^* - \bar{\theta}^*)^2
+}
+\]</span> Where:</p>
 <ul>
-<li>sample is sufficiently large</li>
-<li>sampling distribution of the mean is approximately normal extreme skewness or outliers do not dominate the sample</li>
+<li><span class="math inline">\(B\)</span> : number of bootstrap resamples</li>
+<li><span class="math inline">\(\hat{\theta}_b\)</span> : estimator from bootstrap sample <span class="math inline">\(b\)</span></li>
+<li><span class="math inline">\(\bar{\hat{\theta}}\)</span> : average bootstrap estimate</li>
 </ul>
 </div>
 </section>
 <section class="slide level2">
 
-<h3 id="determine-mean-uncertainty-1">Determine Mean Uncertainty</h3>
-<div style="font-size:0.66em">
+<h3 id="bootstrap-confidence-interval">Bootstrap Confidence Interval</h3>
+<div style="font-size:0.4em">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>mean_se <span class="ot">&lt;-</span> <span class="fu">sd</span>(biomarker_df<span class="sc">$</span>ifng) <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="fu">nrow</span>(biomarker_df))</span>
-<span id="cb6-2"><a href=""></a>mean_ci <span class="ot">&lt;-</span> mean_ifng <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">1.96</span>, <span class="fl">1.96</span>) <span class="sc">*</span> mean_se</span>
-<span id="cb6-3"><a href=""></a></span>
-<span id="cb6-4"><a href=""></a><span class="fu">tibble</span>(</span>
-<span id="cb6-5"><a href=""></a>  <span class="at">mean =</span> mean_ifng,</span>
-<span id="cb6-6"><a href=""></a>  <span class="at">se =</span> mean_se,</span>
-<span id="cb6-7"><a href=""></a>  <span class="at">lower =</span> mean_ci[<span class="dv">1</span>],</span>
-<span id="cb6-8"><a href=""></a>  <span class="at">upper =</span> mean_ci[<span class="dv">2</span>]</span>
-<span id="cb6-9"><a href=""></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a>mean_ci <span class="ot">&lt;-</span> <span class="fu">quantile</span>(</span>
+<span id="cb16-2"><a href=""></a>  boot_means,</span>
+<span id="cb16-3"><a href=""></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>)</span>
+<span id="cb16-4"><a href=""></a>)</span>
+<span id="cb16-5"><a href=""></a></span>
+<span id="cb16-6"><a href=""></a>median_ci <span class="ot">&lt;-</span> <span class="fu">quantile</span>(</span>
+<span id="cb16-7"><a href=""></a>  boot_medians,</span>
+<span id="cb16-8"><a href=""></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>)</span>
+<span id="cb16-9"><a href=""></a>)</span>
+<span id="cb16-10"><a href=""></a></span>
+<span id="cb16-11"><a href=""></a><span class="fu">tibble</span>(</span>
+<span id="cb16-12"><a href=""></a>  <span class="at">estimator =</span> <span class="fu">c</span>(<span class="st">"Mean TMB"</span>, <span class="st">"Median TMB"</span>),</span>
+<span id="cb16-13"><a href=""></a>  <span class="at">lower_95_ci =</span> <span class="fu">c</span>(mean_ci[<span class="dv">1</span>], median_ci[<span class="dv">1</span>]),</span>
+<span id="cb16-14"><a href=""></a>  <span class="at">upper_95_ci =</span> <span class="fu">c</span>(mean_ci[<span class="dv">2</span>], median_ci[<span class="dv">2</span>])</span>
+<span id="cb16-15"><a href=""></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 4
-   mean    se lower upper
-  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1  14.6 0.622  13.3  15.8</code></pre>
+<pre><code># A tibble: 2 × 3
+  estimator  lower_95_ci upper_95_ci
+  &lt;chr&gt;            &lt;dbl&gt;       &lt;dbl&gt;
+1 Mean TMB          7.04        8.25
+2 Median TMB        5.93        7.43</code></pre>
 </div>
 </div>
 <p><strong>Interpretation</strong></p>
 <ul>
-<li>population average IFN-γ: 14.6 pg/mL</li>
-<li>true population mean IFN-γ lies between 13.3 and 15.8 pg/mL</li>
-<li>standard error: 0.622
-<ul>
-<li>if we repeated the study many times <span class="math inline">\(\rightarrow\)</span> mean would vary by about 0.6 units</li>
-</ul></li>
+<li>confidence intervals contain the middle 95% of estimates generated from repeated bootstrap resampling</li>
 </ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="estimating-median">Estimating Median</h3>
-<div style="font-size:0.68em">
+<p>For a 95% bootstrap confidence interval:</p>
 <ul>
-<li>median is often an ideal metric for skewed data</li>
-<li>metirc represents a typical patient without being influenced by extreme values.</li>
-<li>median is not defined by magnitude</li>
-<li>depends on the ordering of the data</li>
-<li>not the numerical contribution of each value</li>
-<li>small changes near the center can shift the median</li>
-<li>large changes in extreme values may have no effect</li>
+<li><p>lower bound is the 2.5th percentile of the bootstrap estimates</p></li>
+<li><p>upper bound is the 97.5th percentile of the bootstrap estimates</p></li>
+<li><p>each bootstrap estimate represents one possible estimate of population TMB obtained from a resampled version of the observed sequencing dataset</p></li>
+<li><p>some bootstrap estimates are smaller and some are larger because sampling variability causes estimates to fluctuate across samples</p></li>
+<li><p>confidence interval summarizes the range of population TMB values that remain plausible given the observed data and the observed variability across resamples</p></li>
 </ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="median-estimation">Median Estimation</h3>
-<div style="font-size:0.68em">
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 5
-  median_ifng iqr_ifng   q25   q75   q90
-        &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1        12.5     10.8  8.33  19.2  24.3</code></pre>
-</div>
-</div>
-<p><strong>Interpretation</strong></p>
-<p><strong>Median</strong></p>
-<ul>
-<li>median IFN-γ : 15.62 pg/mL</li>
-</ul>
-<p><strong>Interquartile Range [IQR]</strong></p>
-<p>IQR: 7.99 pg/mL</p>
-<ul>
-<li>width of that middle range</li>
-<li>indicates a moderate spread around the typical value</li>
-</ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="median-estimation-1">Median Estimation</h3>
-<div style="font-size:0.68em">
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 5
-  median_ifng iqr_ifng   q25   q75   q90
-        &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1        12.5     10.8  8.33  19.2  24.3</code></pre>
-</div>
-</div>
-<p><strong>Interpretation</strong></p>
-<p><strong>q90</strong>: describes upper tail of the distribution or unusually high IFN-γ responses</p>
-<p>Q90 = 23.27 pg/mL</p>
-<ul>
-<li>90% of participants are below this value</li>
-<li>top 10% of patients have values exceed ~23 pg/mL</li>
-</ul>
-<p><strong>First [Q1] and Third Quartile</strong></p>
-<p>Q25 = 11.52 pg/mL Q75 = 19.51 pg/mL</p>
-<ul>
-<li>middle 50% of participants have IFN-γ values between ~11.5 and ~19.5 pg/mL</li>
-</ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="distribution-comparison-closed-form-vs-bootstrap">Distribution Comparison: Closed-Form vs Bootstrap</h3>
-<div style="font-size:0.64em">
-<div class="cell">
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="test_2_082025_files/figure-revealjs/unnamed-chunk-9-1.png" width="960"></p>
-</figure>
-</div>
-</div>
-</div>
-<p><strong>Objective(s)</strong>:</p>
-<ul>
-<li>compare two approaches for approximating IFN-γ population mean
-<ul>
-<li>evaluate whether a closed form approximation and a data-driven method [bootstrap] produce similar representations of uncertainty</li>
-</ul></li>
-</ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="distribution-comparison-closed-form-vs-bootstrap-1">Distribution Comparison: Closed-Form vs Bootstrap</h3>
-<div style="font-size:0.55em">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="test_2_082025_files/figure-revealjs/unnamed-chunk-11-1.png" width="384"></p>
-</figure>
-</div>
-</div>
-</div>
-<p><strong>Interpretation</strong></p>
-<p><strong>Bootstrap Panel</strong></p>
-<ul>
-<li>2000 resampled datasets drawn from the observed data [n = 180 patients]</li>
-</ul>
-<p><strong>Closed-form panel</strong>:</p>
-<ul>
-<li>2000 simulated values drawn from a theoretical distribution</li>
-<li>each value represents a possible sample mean</li>
-</ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="distribution-comparison-closed-form-vs-bootstrap-2">Distribution Comparison: Closed-Form vs Bootstrap</h3>
-<div style="font-size:0.55em">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="test_2_082025_files/figure-revealjs/unnamed-chunk-13-1.png" width="384"></p>
-</figure>
-</div>
-</div>
-</div>
-<p><strong>Comparison</strong></p>
-<ul>
-<li>each histogram represents ~2000 possible sample means</li>
-<li>dashed line marks the observed sample mean</li>
-<li>both panels show ~2000 possible values of the sample mean</li>
-<li>bootstrap generates values by resampling full datasets</li>
-<li>closed-form approach generates values directly from a theoretical normal distribution</li>
-<li>both bootstrap and closed-form methods produce similar sampling distributions for the mean</li>
-<li>indicates that bootstrap based estimate is stable across repeated samples</li>
-</ul>
-</div>
-</section>
-<section class="slide level2">
-
-<h3 id="summary-bootstrap-and-robust-estimation">Summary: Bootstrap and Robust Estimation</h3>
-<div style="font-size:0.64em">
-<p>Bootstrap and robust methods solve related but distinct problems.</p>
-<p><strong>Bootstrap</strong></p>
-<ul>
-<li>estimates uncertainty</li>
-<li>approximates the sampling distribution</li>
-<li>supports standard errors and intervals</li>
-</ul>
-<p><strong>Robust estimation</strong></p>
-<ul>
-<li>improves stability</li>
-<li>reduces sensitivity to extreme values</li>
-<li>helps summarize skewed biomedical data</li>
-</ul>
-<p>Together, they strengthen estimation when classical assumptions are fragile.</p>
 </div>
 </section>
 <section class="slide level2">
 
 <h3 id="summary">Summary</h3>
-<div style="font-size:0.66em">
+<div style="font-size:0.4em">
 <ul>
-<li><p>estimates vary across repeated samples</p></li>
-<li><p>point estimates summarize values from a single dataset<br>
-</p></li>
-<li><p>sampling variability determines how estimates change</p></li>
+<li><p>point estimates summarize characteristics of a population using observed sample data</p></li>
+<li><p>different samples produce different estimates because of sampling variability</p></li>
+<li><p>bootstrap resampling approximates repeated sampling directly from the observed dataset</p></li>
+<li><p>bootstrap methods repeatedly:</p>
+<ul>
+<li>resample the data with replacement</li>
+<li>recompute the estimator</li>
+<li>form an empirical sampling distribution</li>
+</ul></li>
 </ul>
-<p>In practice:</p>
+<p>bootstrap distributions can be used to estimate:</p>
 <ul>
-<li><p>different samples produce different estimates<br>
-</p></li>
-<li><p>stability of an estimate depends on data structure and sample size</p></li>
-<li><p><strong>bootstrap methods</strong>: resample observed data to approximate the sampling distribution</p></li>
-<li><p>multiple approaches can yield similar conclusions<br>
-</p></li>
-<li><p>agreement between methods supports stability of the estimate</p></li>
+<li>standard errors</li>
+<li>confidence intervals</li>
+<li>estimator stability</li>
 </ul>
 </div>
+</section>
+<section class="slide level2">
+
+<h3 id="summary-1">Summary</h3>
+<div style="font-size:0.4em">
+<ul>
+<li><p>point estimates summarize characteristics of a population using observed sample datbootstrap confidence intervals summarize the range of population values that remain plausible given the observed data and the variability observed across bootstrap resamples</p></li>
+<li><p>bootstrap methods are especially useful when:</p>
+<ul>
+<li>distributions are skewed</li>
+<li>assumptions underlying closed-form methods may be fragile</li>
+<li>estimators do not have simple analytic standard error formulas</li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section class="slide level2">
+
 
 </section>
     </div>
