@@ -518,6 +518,32 @@ plot
 -   histogram approximates the sampling distribution of the mean
 -   spread reflects sampling variability
 
+:::
+
+------------------------------------------------------------------------
+
+### Convert Estimates into a Distribution
+
+::: {style="font-size:0.5em"}
+```{r, echo=FALSE}
+boot_mean_df <- tibble(
+  mean_tmb = boot_means
+)
+
+plot <- ggplot(boot_mean_df, aes(x = mean_tmb)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Bootstrap Distribution of the Mean TMB",
+    x = "Bootstrap Mean TMB",
+    y = "Count"
+  ) +
+  theme_bw()
+
+plot
+```
+
+**Interpretation**
+
 Narrow distribution:
 
 -   mean TMB is relatively stable across resamples
@@ -527,7 +553,7 @@ Wide distribution:
 -   mean TMB varies more across resampled datasets
 :::
 
-------------------------------------------------------------------------
+---------
 
 ### Bootstrap for the Median TMB
 
