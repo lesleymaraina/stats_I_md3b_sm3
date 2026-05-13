@@ -178,7 +178,16 @@ TMB provides a summary of how many mutations are present in a tumor genome and i
 
 In this study, TMB is measured from tumor sequencing data to summarize the mutational profile of the patient cohort.
 
-Because TMB values are often right-skewed:
+:::
+
+------------------------------------------------------------------------
+
+### Example: Estimating Typical Tumor Mutation Burden
+
+::: {style="font-size:0.68em"}
+**Background**
+
+TMB values are often right-skewed:
 
 -   many tumors have low-to-moderate mutation burden
 -   fewer tumors have very high mutation burden
@@ -189,9 +198,11 @@ Investigators want to estimate:
 > What is a typical tumor mutation burden among patients in this sequencing cohort?
 :::
 
-------------------------------------------------------------------------
+-------------
 
 ### Simulated Tumor Mutation Burden Dataset
+
+::: {style="font-size:0.68em"}
 
 ```{r, echo=FALSE}
 library(tidyverse)
@@ -267,11 +278,15 @@ Primary scientific question:
 
 Population quantities of interest:
 
-$θ_{mean}$ = population mean tumor mutation burden $θ_{median}$ = population median tumor mutation burden
+$θ_{mean}$ = population mean tumor mutation burden 
+
+$θ_{median}$ = population median tumor mutation burden
 
 Corresponding estimators:
 
-$\bar{x}$ = sample mean tumor mutation burden $\bar{x}$ = sample median tumor mutation burden
+$\bar{x}$ = sample mean tumor mutation burden 
+
+$\bar{x}$ = sample median tumor mutation burden
 
 Bootstrap methods will be used to estimate:
 
@@ -313,7 +328,7 @@ plot
 
 ### Visualize the TMB Distribution
 
-::: {style="font-size:0.55em"}
+::: {style="font-size:0.5em"}
 ```{r, echo=FALSE}
 plot <- ggplot(
   tmb_df,
@@ -440,7 +455,7 @@ After generating the resample:
 
 ### Bootstrap for the Mean TMB
 
-::: {style="font-size:0.6em"}
+::: {style="font-size:0.5em"}
 ```{r}
 set.seed(222)
 
@@ -479,7 +494,7 @@ Result:
 
 ### Convert Estimates into a Distribution
 
-::: {style="font-size:0.6em"}
+::: {style="font-size:0.5em"}
 ```{r, echo=FALSE}
 boot_mean_df <- tibble(
   mean_tmb = boot_means

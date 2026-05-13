@@ -174,7 +174,17 @@ TMB provides a summary of how many mutations are present in a tumor genome and i
 
 In this study, TMB is measured from tumor sequencing data to summarize the mutational profile of the patient cohort.
 
-Because TMB values are often right-skewed:
+
+:::
+
+------------------------------------------------------------------------
+
+### Example: Estimating Typical Tumor Mutation Burden
+
+::: {style="font-size:0.68em"}
+**Background**
+
+TMB values are often right-skewed:
 
 -   many tumors have low-to-moderate mutation burden
 -   fewer tumors have very high mutation burden

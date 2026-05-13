@@ -310,7 +310,14 @@
 <p>Tumor mutation burden is the number of somatic mutations observed per megabase of sequenced tumor DNA.</p>
 <p>TMB provides a summary of how many mutations are present in a tumor genome and is commonly used to describe variation in tumor genomic profiles across patients.</p>
 <p>In this study, TMB is measured from tumor sequencing data to summarize the mutational profile of the patient cohort.</p>
-<p>Because TMB values are often right-skewed:</p>
+</div>
+</section>
+<section class="slide level2">
+
+<h3 id="example-estimating-typical-tumor-mutation-burden-1">Example: Estimating Typical Tumor Mutation Burden</h3>
+<div style="font-size:0.68em">
+<p><strong>Background</strong></p>
+<p>TMB values are often right-skewed:</p>
 <ul>
 <li>many tumors have low-to-moderate mutation burden</li>
 <li>fewer tumors have very high mutation burden</li>
@@ -325,6 +332,7 @@
 <section class="slide level2">
 
 <h3 id="simulated-tumor-mutation-burden-dataset">Simulated Tumor Mutation Burden Dataset</h3>
+<div style="font-size:0.68em">
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 6
@@ -346,7 +354,7 @@
 <li><code>age</code> : patient age at sequencing</li>
 <li><code>high_tmb_status</code> : binary indicator for whether TMB is at least 10 mutations per megabase</li>
 </ul>
-<p>:::</p>
+</div>
 </section>
 <section class="slide level2">
 
@@ -357,9 +365,11 @@
 <p>What is a typical tumor mutation burden among patients with solid tumors in the target sequencing population?</p>
 </blockquote>
 <p>Population quantities of interest:</p>
-<p><span class="math inline">\(θ_{mean}\)</span> = population mean tumor mutation burden <span class="math inline">\(θ_{median}\)</span> = population median tumor mutation burden</p>
+<p><span class="math inline">\(θ_{mean}\)</span> = population mean tumor mutation burden</p>
+<p><span class="math inline">\(θ_{median}\)</span> = population median tumor mutation burden</p>
 <p>Corresponding estimators:</p>
-<p><span class="math inline">\(\bar{x}\)</span> = sample mean tumor mutation burden <span class="math inline">\(\bar{x}\)</span> = sample median tumor mutation burden</p>
+<p><span class="math inline">\(\bar{x}\)</span> = sample mean tumor mutation burden</p>
+<p><span class="math inline">\(\bar{x}\)</span> = sample median tumor mutation burden</p>
 <p>Bootstrap methods will be used to estimate:</p>
 <ul>
 <li>standard error of the mean TMB</li>
@@ -392,7 +402,7 @@
 <section class="slide level2">
 
 <h3 id="visualize-the-tmb-distribution-1">Visualize the TMB Distribution</h3>
-<div style="font-size:0.55em">
+<div style="font-size:0.5em">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -516,7 +526,7 @@
 <section class="slide level2">
 
 <h3 id="bootstrap-for-the-mean-tmb">Bootstrap for the Mean TMB</h3>
-<div style="font-size:0.6em">
+<div style="font-size:0.5em">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">222</span>)</span>
 <span id="cb10-2"><a href=""></a></span>
@@ -557,7 +567,7 @@
 <section class="slide level2">
 
 <h3 id="convert-estimates-into-a-distribution">Convert Estimates into a Distribution</h3>
-<div style="font-size:0.6em">
+<div style="font-size:0.5em">
 <div class="cell">
 <div class="cell-output-display">
 <div>
